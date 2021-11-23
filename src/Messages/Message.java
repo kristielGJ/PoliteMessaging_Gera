@@ -38,8 +38,12 @@ public class Message {
 
     }
 
-
-
+    /***
+     * Get message is used by the client to prompt the user for the message they wish to send to the server
+     * @param scanner
+     * @param writer
+     * @throws IOException
+     */
 
     public void getMessage(Scanner scanner, Writer writer) throws IOException {
         /*** Gets user inputs for header messages ***/
@@ -79,22 +83,36 @@ public class Message {
         requestWriter(writer,messageID,time,to,from,topic,subject,Contents,TempBodyInfo);
     }
 
+    /***
+     * uses the SHA356 class in the Messages.Hashing Package to create the message id
+     * @param inputsToHash
+     * @return
+     */
+
     public String hashHeaders(String inputsToHash){
-        //using SHA356 class in the Messages.Hashing Package to create the message id
         SHA256 messageIdConversion= new SHA256();
         String messageID="Message-id: SHA-256 "+ messageIdConversion.hashSHA256(inputsToHash)+"\r\n";
         //System.out.println(messageID);//test to view hash code
         return messageID;
     }
 
+    /***
+     * Server Output manages the server's responses, uses the Response class in the communication package
+     * @param writer
+     * @param clientSocket
+     * @param serverSocket
+     * @param conn
+     * @param reader
+     * @throws IOException
+     */
     public void serverOutput(Writer writer,Socket clientSocket , ServerSocket serverSocket, DB_Connection conn, BufferedReader reader) throws IOException {
-
         /*** Output what client says ***/
         String msg;
         Integer i=0;
         boolean messageIDSet = false;
         msg = reader.readLine();
         if(msg.contains("Message-id:")) {
+            //System.out.println("Client has sent a Polite Message: ");
             System.out.println(msg);
             messageID = removeHeader(msg);
             messageIDSet = true;
@@ -137,18 +155,33 @@ public class Message {
     }
 
 
-
+    /***
+     * closes ports
+     * @param clientSocket
+     * @param reader
+     * @throws IOException
+     */
     public void closeClientConnections(Socket clientSocket , BufferedReader reader) throws IOException {
         /*** close connections ***/
         clientSocket.close();
         reader.close();
     }
 
+    /***
+     * closes server
+     * @param serverSocket
+     * @throws IOException
+     */
     public void closeServerConnections(ServerSocket serverSocket) throws IOException {
         /*** close connections ***/
         serverSocket.close();
     }
 
+    /***
+     * removes headers so that data can be entered into the database
+     * @param msg
+     * @return
+     */
     public String removeHeader(String msg){
         int locateSplit=msg.indexOf(':');
         if(msg.contains("Message-id:")){
@@ -162,6 +195,19 @@ public class Message {
         }
     }
 
+    /***
+     * Saves the message from the client to a database
+     * Persistent Storage -The implementation can store and reload messages
+     * between times it is run.
+     * @param messageId
+     * @param time
+     * @param from
+     * @param to
+     * @param topic
+     * @param subject
+     * @param contents
+     * @param body
+     */
     public void saveMessage(String messageId,String time,String from, String to, String topic,String subject,String contents,String body){
         System.out.println("Updating Database....");
         try{
@@ -183,6 +229,20 @@ public class Message {
             e.printStackTrace();
         }
     }
+
+    /***
+     * Displays message in console
+     * @param writer
+     * @param messageID
+     * @param time
+     * @param from
+     * @param to
+     * @param topic
+     * @param subject
+     * @param Contents
+     * @param TempBodyInfo
+     * @throws IOException
+     */
     public void requestWriter(Writer writer,String messageID,String time,String from,String to,String topic,String subject,String Contents,String TempBodyInfo) throws IOException {
         System.out.println("Sending Message");
         writer.write(messageID);

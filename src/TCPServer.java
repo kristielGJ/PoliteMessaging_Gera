@@ -1,4 +1,3 @@
-
 import Database.DB_Connection;
 import Messages.Message;
 
@@ -53,8 +52,9 @@ public class TCPServer {
 
         Message message=new Message(conn1);
 
+        System.out.println("PROTOCOL? " + 1 + " Gera's Server" + "\n");
         while(true) {
-            System.out.println("Client has sent a Polite Message: ");
+            //goes to the message class where the server outputs are managed in the serverOutput() function
             message.serverOutput(writer,clientSocket,serverSocket,conn1,reader);
 
         }

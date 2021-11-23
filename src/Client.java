@@ -3,8 +3,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -58,19 +56,22 @@ public class Client {
 	   Message message = new Message(conn1);
 	   Request request;
 	   String msg;
-	   while(true) {
 
+	   System.out.println("PROTOCOL? " + 1 + " Gera's Client" + "\n");
+	   while(true) {
+	   	//User friendly menu
 		   System.out.println("Menu: \r\n");
 		   System.out.println(" - - - - - - - - Polite Messaging - - - - - - - - -");
 		   System.out.println("| Would you like to:                               |\r\n");
 		   System.out.println("| • Send a message (enter 1)                       |\r\n");
-		   System.out.println("| • See more options... (enter 2)                  |\r\n");
+		   System.out.println("| • Make a request (GET? / TIME?/ LIST?)  (enter 2)|\r\n");
 		   System.out.println("|              • Enter BYE! to exit •              |");
 		   System.out.println(" --------------------------------------------------");
 		   msg = scanner.nextLine();
 
-
+			//lists requests
 		   if (msg.equals("1")) {
+		   	//message creation , sending and saving all handled in the Message class
 			   message.getMessage(scanner, writer);
 		   } else if (msg.equals("2")) {
 			   System.out.println(" - - - - - - - - - Protocol Menu - - - - - - - - -");
@@ -82,29 +83,31 @@ public class Client {
 			   System.out.println("|             • Enter 'BYE!' to exit •            |");
 			   System.out.println(" --------------------------------------------------");
 			   msg = scanner.nextLine();
+			   //request class deals with all commands
 			   request = new Request(writer,clientSocket , reader);
+			   //main request in the request class checks what the user input, and will navigate to the appropriate function from this
 			   request.mainRequest(msg);
 
-		   } else if (msg.equals("BYE!")) {
-			   writer.write("BYE!\n");
-			   writer.flush();
-			   message.closeClientConnections(clientSocket, reader);
+		   }else if (msg.equals("BYE!")) {
+		   	//breaks the loop if BYE! is entered. stops the client main() program
 			   break;
 		   } else {
+		   	//prevention of breaking out of the loop, error message
 			   System.out.println("Please enter an option on the menu \r\n");
 		   }
 	   }
 	   // Close down the connection
-	   clientSocket.close();
 	   return(false);
    }
 
     /**
+	 * runs the client
      * @param args the command line arguments
      */
     public static void main(String[] args) throws IOException {
     	try{
 			while(true){
+				//enables the client to constantly send messages and responds to requests until the user inputs "BYE!"
 				Client client = new Client();
 				boolean checker=client.run();
 				if (checker==false){

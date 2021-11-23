@@ -2,14 +2,12 @@ package Communication;
 
 import Database.DB_Connection;
 import Messages.Message;
-import jdk.swing.interop.SwingInterOpUtils;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.time.Instant;
+import java.util.Scanner;
 
 public class Request {
 
@@ -19,7 +17,7 @@ public class Request {
     private ServerSocket serverSocket;
     private DB_Connection conn;
     private BufferedReader reader;
-    private boolean protocolSent = false;
+    private boolean protocolSent=false;
     /**
      * Initialise a request (client input/ output)
      */
@@ -33,14 +31,44 @@ public class Request {
 
     }
 
-    public void ProtocolRequest() throws IOException {
-        System.out.println("SENT PROTOCOL");
-        writer.write("PROTOCOL? " + 1 + " Gera's System" + "\n");
+    /***
+     * Compares protocol versions and displays the highest common protocol version
+     * @return
+     * @throws IOException
+     */
+
+    public boolean ProtocolRequest() throws IOException {
+        int protocol=1;
+        String myProtocol="PROTOCOL? " + 1 + " Gera's System" + "\n";
+        writer.write(myProtocol);
         writer.flush();
-        protocolSent = true;
         String msg = reader.readLine();
-        System.out.println(msg);
+        msg=msg.replace("PROTOCOL? ","");
+        msg=msg.replace(" Gera's System","");
+        msg=msg.replace(" ","");
+        int i = Integer.parseInt(msg);
+        if (msg.contains("1")){
+            writer.write("PROTOCOL: " + 1  + "\n");
+            writer.flush();
+            return protocolSent = true;
+        }else {
+            if(i >protocol){
+                writer.write( "PROTOCOL: " + i  + "\n");
+                writer.flush();
+                return protocolSent = true;
+            }else if(i <protocol){
+                writer.write("PROTOCOL: " + protocol + "\n");
+                writer.flush();
+                return protocolSent = true;
+            }
+        }
+        return protocolSent = true;
     }
+
+    /***
+     * time is the current time at the peer (server's time)
+     * @throws IOException
+     */
     public void TimeRequest() throws IOException {
         writer.write("TIME?\n");
         writer.flush();
@@ -54,17 +82,70 @@ public class Request {
         }
     }
 
-    public void ListRequest(String time, String headers){
-        System.out.println("List?");
-        System.out.println(time);
-        System.out.println(headers);
-        //Look at the sent headers to form sql statements
-        //loop through number of headers using a for loop
-        //no prep statements, use concatenation for sql statements (or similar)
+    /***
+     * Outputs the hash from the Message-id header of each of the messages.
+     * @param request
+     * @throws IOException
+     */
 
+    public void ListRequest(String request) throws IOException {
+        System.out.println("Fill out any of the headers below to filter your search, or press enter to leave them empty...");
 
+        Scanner scanner=new Scanner(System.in);
+        writer.write(request + "\n");
+        System.out.println("Enter To: ");
+
+        String to = scanner.nextLine();
+        if(!to.equals("")){
+            writer.write("To: "+to+"\r\n");
+        }
+        System.out.println("Enter From: ");
+        String from = scanner.nextLine();
+        if(!from.equals("")){
+            writer.write("From: "+ from+"\r\n");
+        }
+        System.out.println("Enter Topic: ");
+        String topic = scanner.nextLine();
+        if(!topic.equals("")){
+            writer.write("Topic: "+topic+"\r\n");
+        }
+        System.out.println("Enter Subject: ");
+        String subject = scanner.nextLine();
+        if(!subject.equals("")){
+            writer.write("Subject: "+subject+"\r\n");
+        }
+        System.out.println("Enter Contents: ");
+        String content  = scanner.nextLine();
+        if(!content.equals("")){
+            writer.write("Contents: " + content+"\r\n");
+        }
+
+        writer.flush();
+        String msg;
+        while(true){
+            msg = reader.readLine();
+            if(msg.contains("MESSAGES")){
+                int count = Integer.parseInt(msg.replace("MESSAGES ",""));
+                System.out.println(msg);
+                for(int i =0; i < count; i++){
+                    msg = reader.readLine();
+                    System.out.println(msg);
+                }
+                break;
+
+            }
+
+        }
     }
 
+    /***
+     * There are two possible responses. A peer can respond with a single line:
+     * SORRY
+     * or it can respond with multiple lines, the first is:
+     * FOUND
+     * @param request
+     * @throws IOException
+     */
     public void GetRequest(String request) throws IOException {
         writer.write(request + "\n");
         writer.flush();
@@ -94,6 +175,11 @@ public class Request {
         }
     }
 
+    /***
+     * A bye request is a single line:
+     * BYE!
+     * @throws IOException
+     */
     public void ByeRequest() throws IOException {
         writer.write("BYE!\n");
         writer.flush();
@@ -101,13 +187,17 @@ public class Request {
         reader.close();
     }
 
+    /***
+     * Handles the client's inputs from the menu found in the Clint class
+     * @param request
+     * @throws IOException
+     */
+
     public void mainRequest(String request) throws IOException {
 
-        if(protocolSent == false){
-            ProtocolRequest();
-            protocolSent = true;
-            System.out.println(protocolSent);
-        }
+       // if(!protocolSent){
+         //   ProtocolRequest();
+        //}
 
         if (request.contains("BYE!")) {
            ByeRequest();
@@ -119,26 +209,7 @@ public class Request {
             GetRequest(request);
 
         }else if(request.contains("LIST?")){
-            System.out.println(Instant.now().getEpochSecond());
-            String requestTimeHeader = request.replace("LIST? ","");
-            int locateSplit=request.indexOf(' ');
-            String requestNumber = requestTimeHeader.substring(locateSplit+5,requestTimeHeader.length());
-            String requestTime = requestTimeHeader.replace(requestNumber,"");
-            requestNumber = requestNumber.replace(" ","");
-            requestNumber = requestNumber.replace(requestTime,"");
-
-            if ((Integer.parseInt(requestNumber) >=0)&&(Long.parseLong(requestTime)<Instant.now().getEpochSecond())){
-                ListRequest(requestTime,requestNumber);
-            }
-            else if (!((Integer.parseInt(requestNumber) >=0)&&(Long.parseLong(requestTime)<Instant.now().getEpochSecond()))){
-                return;
-            }
-
-        }else{
-            return;
+               ListRequest(request);
         }
-
     }
-
-
 }
