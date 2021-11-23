@@ -1,2 +1,2 @@
 # PoliteMessaging_Gera
-ComputerNetworks : achieved 90.5% (first class)
+Computer Networks coursework (second year module): Achieved 90.5% (first class)
